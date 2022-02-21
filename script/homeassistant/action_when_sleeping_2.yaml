@@ -1,0 +1,93 @@
+blueprint:
+  name: Wykonaj akcje gdy wszyscy w domu śpią
+  domain: script
+  input:
+    sleep_1:
+      name: Prawdopodobieństwo spania 1
+      default:
+      selector:
+        entity:
+          domain: sensor
+    wifi_connection_1:
+      name: Połączenie WiFi 1
+      default:
+      selector:
+        entity:
+          domain: sensor
+    sleep_2:
+      name: Prawdopodobieństwo spania 2
+      default:
+      selector:
+        entity:
+          domain: sensor
+    wifi_connection_2:
+      name: Połączenie WiFi 2
+      default:
+      selector:
+        entity:
+          domain: sensor
+    min_confidence:
+      name: Minimalne prawdopodobieństwo
+      selector:
+        number:
+          min: 0
+          max: 100
+    home_wifi:
+      name: Nazwa domowej sieci
+      selector:
+        text:
+    sleeping_action:
+      name: Akcja po zaśnięciu
+      selector:
+        action:
+
+variables:
+  sleep_1: !input sleep_1
+  sleep_2: !input sleep_2
+  min_confidence: !input min_confidence
+  wifi_connection_1: !input wifi_connection_1
+  wifi_connection_2: !input wifi_connection_2
+  home_wifi: !input home_wifi
+
+sequence:
+  - repeat:
+      while: >
+        {{
+          (
+            wifi_connection_1 != None and 
+            sleep_1 != None and
+            states(sleep_1)|int < min_confidence and
+            states(wifi_connection_1) == home_wifi
+          ) or 
+          (
+            wifi_connection_2 != None and 
+            sleep_2 != None and 
+            states(sleep_2)|int < min_confidence and
+            states(wifi_connection_2) == home_wifi
+          ) or
+          (
+            (wifi_connection_1 == None or states(wifi_connection_1) != home_wifi) and
+            (wifi_connection_2 == None or states(wifi_connection_2) != home_wifi)
+          )
+        }}
+      sequence:
+        - wait_for_trigger:
+          - platform: template
+            value_template: >
+              {{ 
+                wifi_connection_1 != None and 
+                sleep_1 != None and 
+                states(sleep_1)|int >= min_confidence and
+                states(wifi_connection_1) == home_wifi
+              }}
+          - platform: template
+            value_template: >
+              {{ 
+                wifi_connection_2 != None and 
+                sleep_2 != None and 
+                states(sleep_2)|int >= min_confidence and
+                states(wifi_connection_2) == home_wifi
+              }}
+  - choose:
+    - conditions: "{{ true }}"
+      sequence: !input sleeping_action

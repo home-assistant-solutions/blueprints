@@ -1,0 +1,41 @@
+blueprint:
+  name: "Rozbrój alarm gdy któreś z dwóch urządzeń wróci do domu"
+  domain: automation
+  input:
+    home_wifi:
+      name: Nazwa domowej sieci
+      selector:
+        text:
+    wifi_connection_1:
+      name: Połączenie WiFi 1
+      default:
+      selector:
+        entity:
+          domain: sensor
+    wifi_connection_2:
+      name: Połączenie WiFi 2
+      default:
+      selector:
+        entity:
+          domain: sensor
+    alarm_code:
+      name: Kod alarmu
+      selector:
+        text:
+
+trigger_variables:
+  wifi_connection_1: !input wifi_connection_1
+  wifi_connection_2: !input wifi_connection_2
+  home_wifi: !input home_wifi
+
+trigger:
+  - platform: template
+    value_template: "{{ wifi_connection_1 == None or (wifi_connection_1 != None and states(wifi_connection_1) == home_wifi) }}"
+  - platform: template
+    value_template: "{{ wifi_connection_2 == None or (wifi_connection_2 != None and states(wifi_connection_2) == home_wifi) }}"
+
+action:
+  service: alarm_control_panel.alarm_disarm
+  data:
+    code: !input alarm_code
+  entity_id: alarm_control_panel.alarm

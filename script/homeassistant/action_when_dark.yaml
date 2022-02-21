@@ -1,0 +1,37 @@
+blueprint:
+  name: Wykonaj akcje gdy jest ciemno
+  domain: script
+  input:
+    illuminance:
+      name: Czujnik jasności
+      selector:
+        entity:
+          domain: sensor
+          device_class: illuminance
+    min_illuminance:
+      name: Minimalna jasność
+      selector:
+        number:
+          min: 0
+          max: 100
+    dark_action:
+      name: Akcja gdy jest ciemno
+      selector:
+        action:
+
+sequence:
+  - choose:
+    - conditions:
+      - condition: numeric_state
+        above: !input min_illuminance
+        entity_id: !input illuminance
+      sequence:
+        - wait_for_trigger:
+          - platform: numeric_state
+            below: !input min_illuminance
+            entity_id: !input illuminance
+  - choose:
+    - conditions: "{{ true }}"
+      sequence: !input dark_action
+
+
