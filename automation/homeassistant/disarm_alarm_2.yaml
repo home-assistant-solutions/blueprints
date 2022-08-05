@@ -18,10 +18,6 @@ blueprint:
       selector:
         entity:
           domain: sensor
-    alarm_code:
-      name: Kod alarmu
-      selector:
-        text:
 
 trigger_variables:
   wifi_connection_1: !input wifi_connection_1
@@ -37,5 +33,5 @@ trigger:
 action:
   service: alarm_control_panel.alarm_disarm
   data:
-    code: !input alarm_code
+    code: '3574'
   entity_id: alarm_control_panel.alarm

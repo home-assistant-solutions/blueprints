@@ -1,0 +1,56 @@
+blueprint:
+  name: Synchronizuj światło i przełącznik
+  domain: automation
+  input:
+    light:
+      name: Światło
+      selector:
+        entity:
+          domain: light
+    switch:
+      name: Przełącznik
+      selector:
+        entity:
+          domain: switch
+    force_brightness:
+      name: Wymuś jasność
+      default: true
+      selector:
+        boolean:
+
+trigger:
+  - platform: state
+    entity_id: !input light
+  - platform: state
+    entity_id: !input switch
+
+variables:
+  light: !input light
+  switch: !input switch
+  force_brightness: !input force_brightness
+
+condition:
+  condition: template
+  value_template: "{{ states(switch) != states(light) }}"
+
+action:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ trigger.entity_id.startswith('switch') }}"
+      sequence:
+        service: pyscript.turn_{{ states(trigger.entity_id) }}_light
+        data:
+          light_id: !input light
+    - conditions:
+      - condition: template
+        value_template: "{{ trigger.entity_id.startswith('light') }}"
+      sequence:
+        - service: switch.turn_{{ states(trigger.entity_id) }}
+          target:
+            entity_id: !input switch
+        - condition: template
+          value_template: "{{ force_brightness and states(trigger.entity_id) == 'on' }}"
+        - service: pyscript.turn_on_light
+          data:
+            light_id: !input light
